@@ -132,6 +132,7 @@ func DecodeFrom(reader io.Reader, strict bool) (Playlist, ListType, error) {
 	if err != nil {
 		return nil, 0, err
 	}
+
 	return decode(buf, strict)
 }
 
@@ -441,7 +442,12 @@ func decodeLineOfMediaPlaylist(p *MediaPlaylist, wv *WV, state *decodingState, l
 	case !state.tagInf && strings.HasPrefix(line, "#EXTINF:"):
 		state.tagInf = true
 		state.listType = MEDIA
-		params := strings.SplitN(line[8:], ",", 2)
+		params := make([]string, 0, 2)
+		if strings.LastIndex(line[8:], ",") > 0 {
+			params = strings.SplitN(line[8:], ",", 2)
+		} else {
+			params = append(params, line[8:], "")
+		}
 		if state.duration, err = strconv.ParseFloat(params[0], 64); strict && err != nil {
 			return errors.New(fmt.Sprintf("Duration parsing error: %s", err))
 		}
